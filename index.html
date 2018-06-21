@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .pixel{
+            position: absolute;
+            height: 0.6vw;
+            width: 0.2vw;
+            visibility: hidden;
+            border-radius: 50%;
+        }
+        body{
+            padding: 0px;
+            margin: 0px;
+            background-color: black;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+
+<script>
+    class Vector{
+        constructor(x,y){
+            this.x = x;
+            this.y = y;
+        }
+        add(vector){
+            this.x+=vector.x;
+            this.y+=vector.y;
+        }
+    }
+
+    function createPixel(colors){
+        let pixel = document.createElement("div");
+        pixel.classList.add("pixel");
+        document.body.appendChild(pixel);
+        return pixel;
+    }
+
+    class Particles{
+        constructor(x,y,gravity,ispart,colors){
+            this.colors = ispart?colors:[Math.floor(100+Math.random()*255),Math.floor(150+Math.random()*255),Math.floor(50+Math.random()*255),1];
+            this.position = new Vector(x,y);
+            let pv_x = -0.2+Math.random()*0.5;
+            let pv_y = -Math.random()*0.5;
+            this.velocity = new Vector(ispart?pv_x:0,ispart?pv_y:-1.5-(Math.random()*0.3));
+            this.gravity = new Vector(0,gravity);
+            this.target = createPixel(this.colors);
+            this.blastMode = false;
+            this.particles = [];
+        }
+
+        update(){
+            if(!this.blastMode) {
+                this.position.add(this.velocity);
+                this.velocity.add(this.gravity);
+            }
+            else
+                for (let i = 0; i < this.particles.length; i++)
+                    this.particles[i].update();
+        }
+
+        show(){
+            if(!this.blastMode) {
+                this.colors[3]-=0.0004;
+                this.target.style.left = this.position.x + "vw";
+                this.target.style.top = this.position.y + "vh";
+                this.target.style.backgroundColor = "rgba("+this.colors[0]+","+this.colors[1]+","+this.colors[2]+","+this.colors[3]+")";
+                this.target.style.visibility = "visible";
+            }
+            else
+                for (let i = 0; i < this.particles.length; i++)
+                    this.particles[i].show();
+        }
+
+        destroyed(){
+            if(this.blastMode){
+                for(let i=0;i<this.particles.length;i++)
+                    if(this.particles[i].position.y<100)
+                        return false;
+                for(let i=0;i<this.particles.length;i++)
+                    document.body.removeChild(this.particles[i].target);
+                return true;
+            }
+            else if (this.velocity.y>=-0.5){
+                document.body.removeChild(this.target);
+                this.blastMode = true;
+                for(let i=0;i<Math.floor(20+Math.random()*20);i++)
+                    this.particles.push(new Particles(this.position.x,this.position.y,this.gravity.y,true,this.colors));
+            }
+            return false;
+        }
+    }
+
+    let gravity = 0.015;
+    let frameSpeed = 10;
+    let probability = 0.02;
+    let fireworks = [];
+
+    let interval = setInterval(function () {
+        if(Math.random()<probability)
+            fireworks.push(new Particles(Math.random()*100,100,gravity,false));
+
+        for(let i=fireworks.length-1;i>=0;i--) {
+            fireworks[i].update();
+            fireworks[i].show();
+            if(fireworks[i].destroyed())
+                fireworks.splice(i,1);
+        }
+    },frameSpeed);
+</script>
+</body>
+</html>
